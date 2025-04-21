@@ -22,7 +22,7 @@ CUSTOM_PROMPT = (
 )
 
 # === LOAD MODELS AND DATA ===
-embedder = SentenceTransformer("thenlper/gte-large")
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
 if not (os.path.exists(EMBEDDING_FILE) and os.path.exists(CHUNK_FILE)):
     st.error("Required data files (embeddings.npy or chunks.json) are missing. Please upload them.")
     st.stop()
