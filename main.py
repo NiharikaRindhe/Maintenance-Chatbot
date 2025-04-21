@@ -23,6 +23,9 @@ CUSTOM_PROMPT = (
 
 # === LOAD MODELS AND DATA ===
 embedder = SentenceTransformer("thenlper/gte-large")
+if not (os.path.exists(EMBEDDING_FILE) and os.path.exists(CHUNK_FILE)):
+    st.error("Required data files (embeddings.npy or chunks.json) are missing. Please upload them.")
+    st.stop()
 chunks = json.load(open(CHUNK_FILE, "r", encoding="utf-8"))
 embeddings = np.load(EMBEDDING_FILE)
 client = genai.Client(api_key=GEMINI_API_KEY)
