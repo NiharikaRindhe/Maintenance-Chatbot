@@ -1,0 +1,100 @@
+Neo4j Graph Schema for Forklift Crane Maintenance Chatbot
+
+## Nodes
+
+1. System
+   - Label: System
+   - Properties:
+     - name: STRING (e.g., "Engine", "Hydraulic")
+
+2. Subsystem (or Part)
+   - Label: Subsystem
+   - Properties:
+     - name: STRING (e.g., "Cold Start", "Actuator")
+
+3. IssueType
+   - Label: IssueType
+   - Properties:
+     - description: STRING (e.g., "Performance Issue", "Warning Alarm")
+
+4. Symptom
+   - Label: Symptom
+   - Properties:
+     - text: STRING (e.g., "Hard to start in cold conditions")
+
+5. DiagnosticClue
+   - Label: DiagnosticClue
+   - Properties:
+     - text: STRING (e.g., "Slow cranking or no combustion")
+
+6. InspectionCheckpoint
+   - Label: InspectionCheckpoint
+   - Properties:
+     - text: STRING (e.g., "Battery voltage, glow plug, fuel quality")
+
+7. CorrectiveAction
+   - Label: Action
+   - Properties:
+     - text: STRING (e.g., "Use warm-up, check glow plugs, replace cold fuel")
+
+## Relationships
+
+- (System)-[:HAS_SUBSYSTEM]->(Subsystem)
+  - A System may have multiple Subsystems.
+
+- (Subsystem)-[:HAS_ISSUE]->(IssueType)
+  - A Subsystem may be associated with multiple IssueTypes.
+
+- (IssueType)-[:MANIFESTS_AS_SYMPTOM]->(Symptom)
+  - An IssueType can manifest in multiple Symptoms.
+
+- (Symptom)-[:DIAGNOSED_BY]->(DiagnosticClue)
+  - A Symptom leads to one or more DiagnosticClues.
+
+- (DiagnosticClue)-[:CHECKPOINT_AT]->(InspectionCheckpoint)
+  - A DiagnosticClue points to one or more InspectionCheckpoints.
+
+- (InspectionCheckpoint)-[:LEADS_TO_ACTION]->(Action)
+  - An InspectionCheckpoint may lead to multiple CorrectiveActions.
+
+- (Action)-[:RESOLVES_ISSUE]->(IssueType)
+  - A CorrectiveAction is intended to resolve an IssueType.
+
+## Example Cypher for Constraints
+
+```cypher
+CREATE CONSTRAINT ON (s:System) ASSERT s.name IS UNIQUE;
+CREATE CONSTRAINT ON (ss:Subsystem) ASSERT ss.name IS UNIQUE;
+CREATE CONSTRAINT ON (i:IssueType) ASSERT i.description IS UNIQUE;
+```
+
+## Example Node Creation
+
+```cypher
+MERGE (sys:System {name: 'Engine'})
+MERGE (sub:Subsystem {name: 'Cold Start'})
+MERGE (sys)-[:HAS_SUBSYSTEM]->(sub)
+```
+
+## Example Full Ingestion Pattern
+
+For each record in your CSV/text data:
+```cypher
+LOAD CSV WITH HEADERS FROM 'file:///maintenance_records.csv' AS row
+MERGE (sys:System {name: row.System})
+MERGE (sub:Subsystem {name: row.Subsystem})
+MERGE (iss:IssueType {description: row.`Issue Type`})
+MERGE (sym:Symptom {text: row.`Symptom / Failure Mode`})
+MERGE (diag:DiagnosticClue {text: row.`Diagnostic Clue`})
+MERGE (chk:InspectionCheckpoint {text: row.`Inspection / Checkpoint`})
+MERGE (act:Action {text: row.`Corrective Action`})
+MERGE (sys)-[:HAS_SUBSYSTEM]->(sub)
+MERGE (sub)-[:HAS_ISSUE]->(iss)
+MERGE (iss)-[:MANIFESTS_AS_SYMPTOM]->(sym)
+MERGE (sym)-[:DIAGNOSED_BY]->(diag)
+MERGE (diag)-[:CHECKPOINT_AT]->(chk)
+MERGE (chk)-[:LEADS_TO_ACTION]->(act)
+MERGE (act)-[:RESOLVES_ISSUE]->(iss);
+```
+
+This schema will allow both structural graph queries and, if you add vector embeddings to nodes, semantic RAG lookups over your maintenance knowledge base.
