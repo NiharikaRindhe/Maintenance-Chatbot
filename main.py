@@ -162,21 +162,22 @@ def answer_with_gemini(question, context=None):
         return f"Error: {e}"
 
 # === STREAMLIT APP ===
-st.set_page_config(page_title="🧠 Maintenance Assistant", layout="wide")
-st.title("🔧 Gemini-Powered Maintenance Chatbot")
+st.set_page_config(page_title="🧠 GMS Maintenance Assistant", layout="wide")
+st.title("🔧 Maintenance Chatbot")
 
 # === Init session state ===
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [
-        {"role": "assistant", "content": "👋 Hello! I’m your maintenance assistant. Ask me anything about inspections, issues, or fixes."}
+        {"role": "assistant", "content": "👋 Hello! I’m your GMS maintenance assistant. Ask me anything about inspections, issues, or fixes."}
     ]
+
 
 # === Display chat history ===
 for msg in st.session_state.chat_history:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# === Chat input ===
+# === Input box ===
 user_input = st.chat_input("Ask a maintenance question...")
 
 if user_input:
@@ -201,21 +202,18 @@ if user_input:
     with st.chat_message("assistant"):
         st.markdown(response_display)
 
-    # Save to history
+    # Save response in history
     st.session_state.chat_history.append({"role": "assistant", "content": response_display})
+
+    # Save last Q for fallback
     st.session_state["last_question"] = user_input
 
-# === Web search button ===
+# === Optional Gemini Web Search Button ===
 st.markdown("---")
 if st.button("🌐 Want to try web search?"):
     if "last_question" in st.session_state:
         with st.chat_message("assistant"):
-            st.markdown("🔍 Searching the web using Gemini...")
+            st.markdown("🔍 Searching on web ...")
             web_answer = answer_with_gemini(st.session_state["last_question"])
-            st.markdown(f"**🌐 Web Answer:**\n\n{web_answer}")
+            st.markdown(f"**🌐Web Answer:**\n\n{web_answer}")
         st.session_state.chat_history.append({"role": "assistant", "content": f"🌐 Web Answer:\n\n{web_answer}"})
-
-# === FOOTER ===
-st.markdown("<hr style='margin-top: 2rem;'>", unsafe_allow_html=True)
-st.markdown("<center><sub>© 2025 <strong>getmysolutions</strong> — All rights reserved.</sub></center>", unsafe_allow_html=True)
-
